@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>관리자 - 문서 스캔 접수 관리</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #1d1d1f; }
+    .header { background: #fff; border-bottom: 1px solid #e5e5e7; padding: 16px 24px; position: sticky; top: 0; z-index: 100; }
+    .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header .badge { background: #007aff; color: #fff; font-size: 12px; padding: 4px 10px; border-radius: 12px; font-weight: 500; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .stat-card .label { font-size: 13px; color: #86868b; margin-bottom: 4px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; }
+    .submissions-list { display: flex; flex-direction: column; gap: 12px; }
+    .submission-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; cursor: pointer; transition: box-shadow 0.2s; }
+    .submission-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .submission-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f2; }
+    .submission-info { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: #007aff; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; }
+    .name-phone .name { font-weight: 600; font-size: 15px; }
+    .name-phone .phone { font-size: 13px; color: #86868b; }
+    .status { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-submitted { background: #d1ecf1; color: #0c5460; }
+    .status-forwarded { background: #d4edda; color: #155724; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .submission-body { padding: 16px 20px; display: none; }
+    .submission-body.open { display: block; }
+    .detail-row { display: flex; margin-bottom: 12px; }
+    .detail-label { width: 100px; font-size: 13px; color: #86868b; flex-shrink: 0; }
+    .detail-value { font-size: 14px; }
+    .images-section { margin-top: 16px; }
+    .images-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+    .doc-group { margin-bottom: 16px; }
+    .doc-group-title { font-size: 13px; color: #86868b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .doc-group-title .doc-badge { background: #e8e8ed; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+    .images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .image-card { border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e7; cursor: pointer; aspect-ratio: 3/4; position: relative; }
+    .image-card img { width: 100%; height: 100%; object-fit: cover; }
+    .image-order { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.65); color: #fff; font-size: 11px; padding: 4px 6px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .actions { margin-top: 16px; display: flex; gap: 8px; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #007aff; color: #fff; }
+    .btn-success { background: #34c759; color: #fff; }
+    .btn-danger { background: #ff3b30; color: #fff; }
+    .btn-outline { background: #fff; color: #007aff; border: 1px solid #007aff; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-image { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+    .modal-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #86868b; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .loading { text-align: center; padding: 40px; color: #86868b; }
+    .vlm-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f2; }
+    .vlm-input { display: flex; gap: 8px; }
+    .vlm-input input { flex: 1; padding: 8px 12px; border: 1px solid #e5e5e7; border-radius: 8px; font-size: 13px; outline: none; }
+    .vlm-input input:focus { border-color: #007aff; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 14px; z-index: 2000; display: none; }
+    .toast.show { display: block; animation: fadeInUp 0.3s ease; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .images-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <h1>문서 스캔 관리</h1>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-outline" style="color:#ff3b30;border-color:#ff3b30;font-size:12px;padding:6px 12px;" onclick="deleteAllSubmissions()">전체 삭제</button>
+        <span class="badge" id="totalBadge">0건</span>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="stats" id="stats">
+      <div class="stat-card"><div class="label">전체 접수</div><div class="value" id="statTotal">0</div></div>
+      <div class="stat-card"><div class="label">대기중</div><div class="value" id="statPending">0</div></div>
+      <div class="stat-card"><div class="label">접수 완료</div><div class="value" id="statSubmitted">0</div></div>
+      <div class="stat-card"><div class="label">전송 완료</div><div class="value" id="statForwarded">0</div></div>
+    </div>
+    <div id="content"><div class="loading">불러오는 중...</div></div>
+  </div>
+  <div class="modal-overlay" id="imageModal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <img class="modal-image" id="modalImage" src="" alt="">
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let submissions = [];
+    let openCardId = null;
+
+    async function loadSubmissions() {
+      try {
+        const res = await fetch('/api/admin/submissions');
+        submissions = await res.json();
+        updateStats();
+        renderList();
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">&#9888;</div><p>데이터를 불러오는데 실패했습니다.</p></div>';
+      }
+    }
+
+    function updateStats() {
+      const total = submissions.length;
+      const pending = submissions.filter(s => s.status === 'pending').length;
+      const submitted = submissions.filter(s => s.status === 'submitted').length;
+      const forwarded = submissions.filter(s => s.status === 'forwarded').length;
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statPending').textContent = pending;
+      document.getElementById('statSubmitted').textContent = submitted;
+      document.getElementById('statForwarded').textContent = forwarded;
+      document.getElementById('totalBadge').textContent = total + '건';
+    }
+
+    function renderList() {
+      const content = document.getElementById('content');
+      if (submissions.length === 0) {
+        content.innerHTML = '<div class="empty-state"><div class="icon">&#128196;</div><p>접수된 문서가 없습니다.</p></div>';
+        return;
+      }
+      content.innerHTML = '<div class="submissions-list">' + submissions.map(s => renderCard(s)).join('') + '</div>';
+    }
+
+    function renderCard(s) {
+      const statusClass = 'status-' + s.status;
+      const statusText = { pending: '대기중', submitted: '접수완료', forwarded: '전송완료', rejected: '반려' }[s.status] || s.status;
+      const date = new Date(s.createdAt).toLocaleString('ko-KR');
+      const isOpen = openCardId === s.id;
+      return `
+        <div class="submission-card">
+          <div class="submission-header" onclick="toggleCard('${s.id}')">
+            <div class="submission-info">
+              <div class="avatar">${s.name.charAt(0)}</div>
+              <div class="name-phone">
+                <div class="name">${s.name}</div>
+                <div class="phone">${s.phone} &middot; ${date}</div>
+              </div>
+            </div>
+            <span class="status ${statusClass}">${statusText}</span>
+          </div>
+          <div class="submission-body ${isOpen ? 'open' : ''}" id="body-${s.id}">
+            <div class="detail-row"><div class="detail-label">이름</div><div class="detail-value">${s.name}</div></div>
+            <div class="detail-row"><div class="detail-label">전화번호</div><div class="detail-value">${s.phone}</div></div>
+            <div class="detail-row"><div class="detail-label">주소</div><div class="detail-value">${s.address}${s.addressDetail ? ' ' + s.addressDetail : ''}</div></div>
+            <div class="detail-row"><div class="detail-label">접수일시</div><div class="detail-value">${date}</div></div>
+            ${s.bankName ? `<div class="detail-row"><div class="detail-label">은행명</div><div class="detail-value">${s.bankName}</div></div>` : ''}
+            ${s.bankAccount ? `<div class="detail-row"><div class="detail-label">계좌번호</div><div class="detail-value">${s.bankAccount}</div></div>` : ''}
+            ${s.bankHolder ? `<div class="detail-row"><div class="detail-label">예금주</div><div class="detail-value">${s.bankHolder}</div></div>` : ''}
+            <div class="images-section" id="images-${s.id}"><div class="loading">이미지 불러오는 중...</div></div>
+            <div class="actions">
+              <button class="btn btn-success" onclick="updateStatus('${s.id}', 'submitted')">접수완료</button>
+              <button class="btn btn-danger" onclick="updateStatus('${s.id}', 'rejected')">반려</button>
+              <button class="btn btn-outline" style="color:#ff3b30;border-color:#ff3b30;" onclick="deleteSubmission('${s.id}')">삭제</button>
+            </div>
+            <div class="vlm-section">
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;">VLM 서버 전송</div>
+              <div class="vlm-input">
+                <input type="text" id="vlm-url-${s.id}" placeholder="VLM 서버 URL (예: https://vlm.example.com/api/analyze)">
+                <button class="btn btn-primary" onclick="forwardToVLM('${s.id}')">전송</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function toggleCard(id) {
+      if (openCardId === id) { openCardId = null; renderList(); return; }
+      openCardId = id;
+      renderList();
+      try {
+        const res = await fetch(`/api/admin/submissions/${id}`);
+        const data = await res.json();
+        renderImages(id, data.images || []);
+      } catch (e) {
+        document.getElementById('images-' + id).innerHTML = '<p style="color:#ff3b30;font-size:13px;">이미지를 불러올 수 없습니다.</p>';
+      }
+    }
+
+    function renderImages(id, images) {
+      const container = document.getElementById('images-' + id);
+      if (!images.length) { container.innerHTML = '<p style="color:#86868b;font-size:13px;">첨부된 이미지가 없습니다.</p>'; return; }
+      const grouped = {};
+      images.forEach(img => {
+        if (!grouped[img.documentType]) grouped[img.documentType] = [];
+        grouped[img.documentType].push(img);
+      });
+      const typeNames = { family_certificate: '가족관계증명서', receipt: '영수증' };
+      let html = '';
+      for (const [type, imgs] of Object.entries(grouped)) {
+        const sorted = imgs.sort((a, b) => a.imageOrder - b.imageOrder);
+        html += `<div class="doc-group"><div class="doc-group-title">${typeNames[type] || type} <span class="doc-badge">${sorted.length}장</span></div><div class="images-grid">`;
+        sorted.forEach((img, i) => {
+          const displayName = img.fileName || (typeNames[type] || type) + ' ' + (i + 1);
+          html += `<div class="image-card" onclick="openImage('${img.imageUrl}')"><img src="${img.imageUrl}" alt="${type}" loading="lazy"><div class="image-order">${displayName}</div></div>`;
+        });
+        html += '</div></div>';
+      }
+      container.innerHTML = '<h3>스캔 이미지</h3>' + html;
+    }
+
+    function openImage(url) { document.getElementById('modalImage').src = url; document.getElementById('imageModal').classList.add('open'); }
+    function closeModal() { document.getElementById('imageModal').classList.remove('open'); }
+    document.getElementById('imageModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+    async function updateStatus(id, status) {
+      try {
+        await fetch(`/api/admin/submissions/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+        showToast('상태가 업데이트되었습니다.');
+        loadSubmissions();
+      } catch (e) { showToast('업데이트에 실패했습니다.'); }
+    }
+
+    async function forwardToVLM(id) {
+      const url = document.getElementById('vlm-url-' + id).value.trim();
+      if (!url) { showToast('VLM 서버 URL을 입력해주세요.'); return; }
+      try {
+        const res = await fetch(`/api/vlm/forward/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vlmServerUrl: url }) });
+        const data = await res.json();
+        if (res.ok) { showToast('VLM 서버로 전송 완료!'); loadSubmissions(); }
+        else { showToast('전송 실패: ' + (data.error || '알 수 없는 오류')); }
+      } catch (e) { showToast('전송에 실패했습니다.'); }
+    }
+
+    async function deleteSubmission(id) {
+      if (!confirm('이 접수 데이터를 삭제하시겠습니까? 관련 이미지도 함께 삭제됩니다.')) return;
+      try {
+        const res = await fetch(`/api/admin/submissions/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          openCardId = null;
+          showToast('삭제되었습니다.');
+          loadSubmissions();
+        } else { showToast('삭제에 실패했습니다.'); }
+      } catch (e) { showToast('삭제에 실패했습니다.'); }
+    }
+
+    async function deleteAllSubmissions() {
+      if (!confirm('모든 접수 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+      if (!confirm('정말로 전체 삭제하시겠습니까?')) return;
+      try {
+        const res = await fetch('/api/admin/submissions', { method: 'DELETE' });
+        if (res.ok) {
+          const data = await res.json();
+          openCardId = null;
+          showToast(`${data.deleted}건이 삭제되었습니다.`);
+          loadSubmissions();
+        } else { showToast('전체 삭제에 실패했습니다.'); }
+      } catch (e) { showToast('전체 삭제에 실패했습니다.'); }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    loadSubmissions();
+    setInterval(loadSubmissions, 30000);
+  </script>
+</body>
+</html>

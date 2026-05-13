@@ -1,0 +1,30 @@
+const Colors = {
+  primary: "#0066FF",
+  primaryDark: "#0052CC",
+  primaryLight: "#E6F0FF",
+  secondary: "#1A1A2E",
+  background: "#FFFFFF",
+  surface: "#F8F9FA",
+  surfaceAlt: "#F0F2F5",
+  text: "#1A1A2E",
+  textSecondary: "#6B7280",
+  textLight: "#9CA3AF",
+  border: "#E5E7EB",
+  borderLight: "#F3F4F6",
+  success: "#10B981",
+  successLight: "#D1FAE5",
+  warning: "#F59E0B",
+  warningLight: "#FEF3C7",
+  danger: "#EF4444",
+  dangerLight: "#FEE2E2",
+  white: "#FFFFFF",
+  black: "#000000",
+  overlay: "rgba(0,0,0,0.5)",
+  camera: {
+    guideFrame: "rgba(0, 102, 255, 0.8)",
+    guideFrameReady: "rgba(16, 185, 129, 0.9)",
+    darkWarning: "rgba(239, 68, 68, 0.9)",
+  },
+};
+
+export default Colors;

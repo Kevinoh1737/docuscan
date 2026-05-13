@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "dist/**",
+          "server/templates/**",
+          "assets/**",
+          "static-build/**",
+          "app.json"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/_expo/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/assets_expo/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/objects/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/public-objects/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/admin",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server/index.ts"
+    }
+  ]
+}
