@@ -41,7 +41,6 @@ export default function ReviewScreen() {
         phone: userInfo.phone,
         address: userInfo.address,
         addressDetail: userInfo.addressDetail,
-        kakaoId: userInfo.kakaoId || null,
         bankName: userInfo.bankName || null,
         bankAccount: userInfo.bankAccount || null,
         bankHolder: userInfo.bankHolder || null,

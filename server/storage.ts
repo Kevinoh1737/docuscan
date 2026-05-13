@@ -24,7 +24,15 @@ export class DatabaseStorage implements IStorage {
   async createSubmission(data: InsertSubmission): Promise<Submission> {
     const [submission] = await db
       .insert(submissions)
-      .values(data)
+      .values({
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        addressDetail: data.addressDetail ?? null,
+        bankName: data.bankName ?? null,
+        bankAccount: data.bankAccount ?? null,
+        bankHolder: data.bankHolder ?? null,
+      })
       .returning();
     return submission;
   }
@@ -47,7 +55,7 @@ export class DatabaseStorage implements IStorage {
   async updateSubmissionStatus(id: string, status: string): Promise<Submission | undefined> {
     const [submission] = await db
       .update(submissions)
-      .set({ status, updatedAt: new Date() })
+      .set({ status, updatedAt: new Date() } as any)
       .where(eq(submissions.id, id))
       .returning();
     return submission || undefined;
@@ -68,7 +76,13 @@ export class DatabaseStorage implements IStorage {
   async addScannedImage(data: InsertScannedImage): Promise<ScannedImage> {
     const [image] = await db
       .insert(scannedImages)
-      .values(data)
+      .values({
+        submissionId: data.submissionId,
+        documentType: data.documentType,
+        imageUrl: data.imageUrl,
+        imageOrder: data.imageOrder ?? 0,
+        fileName: data.fileName ?? null,
+      })
       .returning();
     return image;
   }

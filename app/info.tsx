@@ -70,7 +70,6 @@ export default function InfoScreen() {
       bankName: bankName.trim(),
       bankAccount: bankAccount.trim(),
       bankHolder: bankHolder.trim(),
-      kakaoId: userInfo.kakaoId,
     });
     router.push("/scan-select");
   };
